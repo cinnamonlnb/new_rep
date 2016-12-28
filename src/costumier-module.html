@@ -9,6 +9,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 -->
 
 <link rel="import" href="../bower_components/polymer/polymer.html">
+
 <link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
 <link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
 <link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
@@ -17,18 +18,19 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 <link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
 <link rel="import" href="../bower_components/app-route/app-location.html">
 <link rel="import" href="../bower_components/app-route/app-route.html">
+
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
-<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
-<link rel="import" href="main-modules/main-new-module.html">
-<link rel="import" href="main-modules/main-costumier-module.html">
-<link rel="import" href="main-modules/main-clothes-module.html">
 
+<link rel="import" href="../bower_components/polymerfire/firebase-app.html">
 
 <link rel="import" href="my-icons.html">
 <link rel="import" href="css-module.html">
+<link rel="import" href="behaviors/database-behavior.html">
 
 <dom-module id="costumier-module">
   <template>
@@ -38,7 +40,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       width:50%;
     margin-left: 25%;
         --paper-tabs-selection-bar-color: black;
-        
+
         --paper-tabs-content{
             background-color: aqua;
         }
@@ -53,10 +55,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
         tail="{{subroute}}"></app-route>
 
     <app-drawer-layout fullbleed>
-      <!-- Drawer content -->
-     
 
-      <!-- Main content -->
       <app-header-layout has-scrolling-region>
 
         <app-header condenses reveals effects="waterfall">
@@ -64,21 +63,21 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
               <div class="layout vertical" style="width:100%">
                 <div style="
-					padding-top: 50px;
-					text-align: center;
-					font-family: 'Slabo 27px', serif;
-					font-size: 30px;
-					width: 100%;" 
-					>
-					Costumier
-				</div>
-			    <paper-tabs class="tabs" noink selected="{{page}}" attr-for-selected="name">
-					<paper-tab name="new">Новинки</paper-tab>
-					<paper-tab name="costumiers">Костюмеры</paper-tab>
-					<paper-tab name="clothes">Одежда</paper-tab>
-				</paper-tabs>  
+          padding-top: 50px;
+          text-align: center;
+          font-family: 'Slabo 27px', serif;
+          font-size: 30px;
+          width: 100%;"
+          >
+          Costumier
+        </div>
+          <paper-tabs class="tabs" noink selected="{{page}}" attr-for-selected="name">
+          <paper-tab name="new">Новинки</paper-tab>
+          <paper-tab name="costumiers">Костюмеры</paper-tab>
+          <paper-tab name="clothes">Одежда</paper-tab>
+        </paper-tabs>
               </div>
-            
+
           </app-toolbar>
         </app-header>
 
@@ -87,14 +86,23 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
             attr-for-selected="name"
             fallback-selection="view404"
             role="main">
-			<new-module name="new"></new-module>
-			<costumiers-module name="costumiers"></costumiers-module>
-			<clothes-module name="clothes"></clothes-module>
-          	<my-view404 name="view404"></my-view404>
+      <new-module name="new"></new-module>
+      <costumiers-module name="costumiers"></costumiers-module>
+      <clothes-module name="clothes"></clothes-module>
+            <my-view404 name="view404"></my-view404>
         </iron-pages>
       </app-header-layout>
     </app-drawer-layout>
-  </template> 
+    <firebase-app auth-domain="costumier-fb440.firebaseapp.com"
+                  database-url="https://costumier-fb440.firebaseio.com/"
+                  api-key="AIzaSyA1ZRhreP8fEj8rHCZfabzy8Bl2n2Yi498"
+                  storage-bucket="costumier-fb440.appspot.com">
+    </firebase-app>
+<!--
+    <firebase-auth id="auth" user="{{user}}" provider="google" on-error="handleError">
+    </firebase-auth>
+-->
+  </template>
 
   <script>
     Polymer({
@@ -105,8 +113,16 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           type: String,
           reflectToAttribute: true,
           observer: '_pageChanged',
-			value: "home"
+          value: "home"
         }
+      },
+
+      behaviors:[
+        DatabaseBehavior
+      ],
+
+      attached:function(){
+        this.db.ref('Users/').set(3)
       },
 
       observers: [
@@ -119,7 +135,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
       _pageChanged: function(page) {
         // Load page import on demand. Show 404 page if fails
-		 this.$.route.path = '/' + page
+     this.$.route.path = '/' + page
         var resolvedPageUrl = this.resolveUrl(page + '/' + page + '-module.html');
         this.importHref(resolvedPageUrl, null, this._showPage404, true);
       },
