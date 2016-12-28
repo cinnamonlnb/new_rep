@@ -1,0 +1,132 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../bower_components/iron-flex-layout/iron-flex-layout-classes.html">
+<link rel="import" href="main-modules/main-new-module.html">
+<link rel="import" href="main-modules/main-costumier-module.html">
+<link rel="import" href="main-modules/main-clothes-module.html">
+
+
+<link rel="import" href="my-icons.html">
+<link rel="import" href="css-module.html">
+
+<dom-module id="costumier-module">
+  <template>
+    <style include="css-module">
+
+    .tabs {
+      width:50%;
+    margin-left: 25%;
+        --paper-tabs-selection-bar-color: black;
+        
+        --paper-tabs-content{
+            background-color: aqua;
+        }
+    }
+    </style>
+
+    <app-location route="{{route}}" id="route"></app-location>
+    <app-route
+        route="{{route}}"
+        pattern="/:page"
+        data="{{routeData}}"
+        tail="{{subroute}}"></app-route>
+
+    <app-drawer-layout fullbleed>
+      <!-- Drawer content -->
+     
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header condenses reveals effects="waterfall">
+          <app-toolbar>
+            <paper-icon-button icon="menu" drawer-toggle></paper-icon-button>
+              <div class="layout vertical" style="width:100%">
+                <div style="
+					padding-top: 50px;
+					text-align: center;
+					font-family: 'Slabo 27px', serif;
+					font-size: 30px;
+					width: 100%;" 
+					>
+					Costumier
+				</div>
+			    <paper-tabs class="tabs" noink selected="{{page}}" attr-for-selected="name">
+					<paper-tab name="new">Новинки</paper-tab>
+					<paper-tab name="costumiers">Костюмеры</paper-tab>
+					<paper-tab name="clothes">Одежда</paper-tab>
+				</paper-tabs>  
+              </div>
+            
+          </app-toolbar>
+        </app-header>
+
+        <iron-pages
+            selected="[[page]]"
+            attr-for-selected="name"
+            fallback-selection="view404"
+            role="main">
+			<new-module name="new"></new-module>
+			<costumiers-module name="costumiers"></costumiers-module>
+			<clothes-module name="clothes"></clothes-module>
+          	<my-view404 name="view404"></my-view404>
+        </iron-pages>
+      </app-header-layout>
+    </app-drawer-layout>
+  </template> 
+
+  <script>
+    Polymer({
+      is: 'costumier-module',
+
+      properties: {
+        page: {
+          type: String,
+          reflectToAttribute: true,
+          observer: '_pageChanged',
+			value: "home"
+        }
+      },
+
+      observers: [
+        '_routePageChanged(routeData.page)'
+      ],
+
+      _routePageChanged: function(page) {
+        this.page = page || 'view1';
+      },
+
+      _pageChanged: function(page) {
+        // Load page import on demand. Show 404 page if fails
+		 this.$.route.path = '/' + page
+        var resolvedPageUrl = this.resolveUrl(page + '/' + page + '-module.html');
+        this.importHref(resolvedPageUrl, null, this._showPage404, true);
+      },
+
+      _showPage404: function() {
+        this.page = 'view404';
+      }
+    });
+  </script>
+</dom-module>
