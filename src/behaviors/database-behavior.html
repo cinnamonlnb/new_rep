@@ -1,0 +1,195 @@
+<link rel="import" href="../../bower_components/polymerfire/firebase-database-behavior.html">
+<link rel="import" href="spinner-module.html">
+
+<script>
+  DB = {
+
+    behaviors:[
+      Polymer.FirebaseDatabaseBehavior
+    ],
+    startSpin:function(e){
+
+      const list = Polymer.dom(this.root).querySelector('iron-list')
+      const dr =  Polymer.dom(this.root).querySelector('template')
+      const spin = Polymer.dom(this.root).querySelector('spinner-module')
+
+      if(list && spin==undefined){
+        const spinner = document.createElement("spinner-module")
+        list.parentNode.insertBefore(spinner,list)
+      } else if(dr && spin==undefined){
+        if(dr.id == 'list'){
+          const spinner = document.createElement("spinner-module")
+          dr.parentNode.insertBefore(spinner,dr)
+        }
+
+      }
+    },
+
+    endSpin:function(e){
+      const spinner = Polymer.dom(this.root).querySelector('spinner-module')
+      if(spinner) spinner.parentNode.removeChild(spinner)
+        },
+
+    fillObjects: function(ref,callback,push){
+      var that = this;
+      this.startSpin()
+      this.db.ref(ref).on('value',function(objects){
+        var Objects = [];
+        objects.forEach(function(object){
+          var Object = {
+            key: object.key,
+            val: object.val()
+          };
+          push ? Objects.push(Object) : Objects.unshift(Object);
+        });
+        that.endSpin()
+        callback(Objects)
+      });
+    },
+
+    fillItems: function(ref,callback,push){
+      var that = this;
+      this.startSpin()
+
+      this.db.ref(ref).on('value',function(objects){
+        var Objects = [];
+        objects.forEach(function(object){
+          var Object = object.val();
+          push ? Objects.push(Object) : Objects.unshift(Object);
+        });
+        that.endSpin()
+        callback(Objects);
+      });
+    },
+
+    fillItemsOnce: function(ref,callback,push){
+      var that = this;
+      this.startSpin()
+      this.db.ref(ref).once('value',function(objects){
+        var Objects = [];
+        objects.forEach(function(object){
+          var Object = object.val();
+          push ? Objects.push(Object) : Objects.unshift(Object);
+        });
+        that.endSpin()
+        callback(Objects);
+      });
+    },
+
+    fillOrder: function(ref,child,eq,callback,push){
+      var that = this
+      this.startSpin()
+      this.fire('start-spin')
+      this.db.ref(ref).orderByChild(child).equalTo(eq).on('value',function(objects){
+        var Objects = [];
+        objects.forEach(function(object){
+          var Object = {
+            key: object.key,
+            val: object.val()
+          };
+          push ? Objects.push(Object) : Objects.unshift(Object);
+        });
+        that.endSpin()
+        callback(Objects)
+      });
+    },
+
+    fillLast: function(ref,num,callback,push){
+      const that = this;
+      this.db.ref(ref).limitToLast(num).on('value',function(objects){
+        var Objects = [];
+        objects.forEach(function(object){
+          var Object = {
+            key: object.key,
+            val: object.val()
+          };
+          push ? Objects.push(Object) : Objects.unshift(Object);
+        });
+        callback(Objects);
+      });
+    },
+
+    getItem: function(ref,callback){
+      this.db.ref(ref).on('value',function(item){
+        callback(item.val());
+      })
+    },
+
+    getItemOnce: function(ref,callback){
+      this.db.ref(ref).once('value',function(item){
+        callback(item.val());
+      })
+    },
+
+    getObject: function(ref,callback){
+      this.db.ref(ref).on('value',function(item){
+        callback({
+          val: item.val(),
+          key: item.key
+        });
+      })
+    },
+
+    getObjectOnce: function(ref,callback){
+      this.db.ref(ref).once('value',function(item){
+        callback({
+          val: item.val(),
+          key: item.key
+        });
+      })
+    },
+
+    attached: function(){
+      const list = Polymer.dom(this.root).querySelector('iron-list');
+
+      if(list){
+
+        list.scrollTarget = this.ownerDocument.documentElement;
+      }
+
+    },
+
+    getYear: ()=>{
+      const date = new Date()
+      const month = date.getMonth()
+      const year = date.getFullYear()
+
+      if(month < 6){
+        return (year-1) + '-' + year
+      } else {
+        return (year) + '-' + (year + 1)
+      }
+    },
+
+    sendNotifs: function(school,cl,group,type,d,callback){
+
+      var data = {}
+      const that = this
+      this.db.ref('Users/').orderByChild('full').equalTo(cl + '_' + school).once('value',pupils=>{
+
+        pupils.forEach(pupil => {
+
+          if(pupil.val().group == group){
+
+            const id = that.db.ref('Notifs/' + pupil.key).push().key
+
+            data[pupil.key+ '/' + id] = {
+              type: type,
+              auth: Cookies.get('id'),
+              data: d,
+              read:0
+            }
+          }
+
+        })
+
+        //          console.log(data)
+
+        that.db.ref('Notifs/').update(data)
+      })
+    }
+
+  }
+
+  var DatabaseBehavior = [DB, Polymer.FirebaseDatabaseBehavior]
+</script>
